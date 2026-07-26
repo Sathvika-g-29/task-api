@@ -38,4 +38,4 @@ curl -i -X POST http://localhost:8000/tasks \
 ## Notes
 
 Data is stored in memory only. Restarting the server resets all tasks.
-This is intentional — a real database comes next week.
+This is intentional - a real database comes next week.
