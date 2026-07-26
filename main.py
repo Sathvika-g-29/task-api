@@ -1,8 +1,14 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 class TaskInput(BaseModel):
     title: str
+
+    @validator("title")
+    def title_not_empty(cls, v):
+        if not v.strip():
+            raise ValueError("title cannot be empty")
+        return v
 app = FastAPI()
 
 # ─── In-memory "database" ───────────────────────────────
