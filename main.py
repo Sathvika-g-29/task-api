@@ -1,9 +1,11 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException,Response
 from pydantic import BaseModel, validator
 
 class TaskInput(BaseModel):
     title: str
-
+class TaskUpdate(BaseModel):
+    title: str
+    done: bool
     @validator("title")
     def title_not_empty(cls, v):
         if not v.strip():
@@ -44,3 +46,19 @@ def create_task(task: TaskInput):
     newtask={"id":l+1,"title":task.title,"done":False}
     tasks.append(newtask)
     return newtask
+@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}")
+def update(task_id: int, task_update: TaskUpdate):
+    for task in tasks:
+        if task["id"] == task_id:
+            task["title"] = task_update.title
+            task["done"] = task_update.done
+            return task
+    raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+@app.delete("/tasks/{task_id}")
+def remove(task_id:int):
+    for task in tasks:
+        if task["id"]==task_id:
+            tasks.remove(task)
+            return Response(status_code=204)
+    raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
