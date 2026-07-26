@@ -11,7 +11,11 @@ class TaskUpdate(BaseModel):
         if not v.strip():
             raise ValueError("title cannot be empty")
         return v
-app = FastAPI()
+app = FastAPI(
+    title="Task API",
+    description="A simple to-do list API with full CRUD operations",
+    version="1.0"
+)
 
 # ─── In-memory "database" ───────────────────────────────
 tasks = [
@@ -21,33 +25,32 @@ tasks = [
 ]
 
 # ─── Stage 1 endpoints ──────────────────────────────────
-@app.get("/")
+@app.get("/", summary="API info")
 def root():
     return {"name": "Task API", "version": "1.0", "endpoints": ["/tasks"]}
 
-@app.get("/health")
+@app.get("/health", summary="Health check")
 def health():
     return {"status": "ok"}
 
 # ─── Stage 2 endpoints ──────────────────────────────────
-@app.get("/tasks")
+@app.get("/tasks", summary="Get all tasks")
 def get_tasks():
     return tasks
 
-@app.get("/tasks/{task_id}")
+@app.get("/tasks/{task_id}", summary="Get a single task")
 def get_task(task_id: int):
     for task in tasks:
         if task["id"] == task_id:
             return task
     raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-@app.post("/tasks", status_code=201)
+@app.post("/tasks", status_code=201, summary="Create a new task")
 def create_task(task: TaskInput):
     l=len(tasks)
     newtask={"id":l+1,"title":task.title,"done":False}
     tasks.append(newtask)
     return newtask
-@app.put("/tasks/{task_id}")
-@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}", summary="Update a task")
 def update(task_id: int, task_update: TaskUpdate):
     for task in tasks:
         if task["id"] == task_id:
@@ -55,7 +58,7 @@ def update(task_id: int, task_update: TaskUpdate):
             task["done"] = task_update.done
             return task
     raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
-@app.delete("/tasks/{task_id}")
+@app.delete("/tasks/{task_id}", summary="Delete a task")
 def remove(task_id:int):
     for task in tasks:
         if task["id"]==task_id:
