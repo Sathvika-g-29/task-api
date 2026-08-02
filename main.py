@@ -38,15 +38,23 @@ def health():
 @app.get("/tasks", summary="Get all tasks")
 def get_tasks(search: str = None, done: bool = None):
     conn = get_db()
-    
+
+    query = "SELECT * FROM tasks"
+    params = []
+    conditions = []
+
     if search:
-        rows = conn.execute(
-            "SELECT * FROM tasks WHERE title LIKE ?",
-            (f"%{search}%",)
-        ).fetchall()
-    else:
-        rows = conn.execute("SELECT * FROM tasks").fetchall()
-    
+        conditions.append("title LIKE ?")
+        params.append(f"%{search}%")
+
+    if done is not None:
+        conditions.append("done = ?")
+        params.append(int(done))
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    rows = conn.execute(query, params).fetchall()
     conn.close()
     return [dict(row) for row in rows]
 @app.get("/tasks/{task_id}", summary="Get a single task")
