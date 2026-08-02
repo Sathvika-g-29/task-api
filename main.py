@@ -36,12 +36,19 @@ def health():
 
 # ─── Task endpoints ──────────────────────────────────────
 @app.get("/tasks", summary="Get all tasks")
-def get_tasks():
+def get_tasks(search: str = None, done: bool = None):
     conn = get_db()
-    rows = conn.execute("SELECT * FROM tasks").fetchall()
+    
+    if search:
+        rows = conn.execute(
+            "SELECT * FROM tasks WHERE title LIKE ?",
+            (f"%{search}%",)
+        ).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM tasks").fetchall()
+    
     conn.close()
     return [dict(row) for row in rows]
-
 @app.get("/tasks/{task_id}", summary="Get a single task")
 def get_task(task_id: int):
     conn = get_db()
