@@ -49,13 +49,6 @@ app = FastAPI(
 
 init_db()  # 👈 runs once when server starts
 
-# ─── Keep your in-memory tasks for now (we'll remove in Stage 1) ───
-tasks = [
-    {"id": 1, "title": "Buy groceries", "done": False},
-    {"id": 2, "title": "Read a book",   "done": False},
-    {"id": 3, "title": "Go for a walk", "done": True},
-]
-
 
 # ─── Stage 1 endpoints ──────────────────────────────────
 @app.get("/", summary="API info")
@@ -69,14 +62,18 @@ def health():
 # ─── Stage 2 endpoints ──────────────────────────────────
 @app.get("/tasks", summary="Get all tasks")
 def get_tasks():
-    return tasks
-
+    conn = get_db()
+    rows = conn.execute("SELECT * FROM tasks").fetchall()
+    conn.close()
+    return [dict(row) for row in rows]
 @app.get("/tasks/{task_id}", summary="Get a single task")
 def get_task(task_id: int):
-    for task in tasks:
-        if task["id"] == task_id:
-            return task
-    raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    conn = get_db()
+    row = conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
+    conn.close()
+    if row is None:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    return dict(row)
 @app.post("/tasks", status_code=201, summary="Create a new task")
 def create_task(task: TaskInput):
     l=len(tasks)
