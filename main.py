@@ -1,28 +1,61 @@
-from fastapi import FastAPI, HTTPException,Response
+from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, validator
+import sqlite3  
+# ─── Database setup ─────────────────────────────────────
+def get_db():
+    conn = sqlite3.connect("tasks.db")
+    conn.row_factory = sqlite3.Row  # lets you access columns by name like a dict
+    return conn
 
+def init_db():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS tasks (
+            id    INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            done  INTEGER DEFAULT 0
+        )
+    """)
+    count = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    if count == 0:
+        conn.executemany("INSERT INTO tasks (title, done) VALUES (?, ?)", [
+            ("Buy groceries", 0),
+            ("Read a book",   0),
+            ("Go for a walk", 1),
+        ])
+    conn.commit()
+    conn.close()
+
+# ─── Models ─────────────────────────────────────────────
 class TaskInput(BaseModel):
     title: str
+
 class TaskUpdate(BaseModel):
     title: str
     done: bool
+
     @validator("title")
     def title_not_empty(cls, v):
         if not v.strip():
             raise ValueError("title cannot be empty")
         return v
+
+# ─── App ────────────────────────────────────────────────
 app = FastAPI(
     title="Task API",
     description="A simple to-do list API with full CRUD operations",
     version="1.0"
 )
 
-# ─── In-memory "database" ───────────────────────────────
+init_db()  # 👈 runs once when server starts
+
+# ─── Keep your in-memory tasks for now (we'll remove in Stage 1) ───
 tasks = [
     {"id": 1, "title": "Buy groceries", "done": False},
     {"id": 2, "title": "Read a book",   "done": False},
     {"id": 3, "title": "Go for a walk", "done": True},
 ]
+
 
 # ─── Stage 1 endpoints ──────────────────────────────────
 @app.get("/", summary="API info")
