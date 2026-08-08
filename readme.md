@@ -57,3 +57,6 @@ not inside the container. `docker compose down` stops containers but keeps volum
 - `Dockerfile` — builds the FastAPI app image
 - `.env` — gitignored secrets
 - `.env.example` — committed placeholder for collaborators
+## Database screenshot
+
+![Database rows](Screenshot.png)
