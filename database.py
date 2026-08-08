@@ -1,31 +1,36 @@
-import sqlite3
+import psycopg
+import psycopg.rows
 import os
+from dotenv import load_dotenv
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, "tasks.db")
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 def get_db():
-    conn = sqlite3.connect(DB_PATH)  # 👈 uses absolute path now
-    conn.row_factory = sqlite3.Row
+    conn = psycopg.connect(DATABASE_URL, row_factory=psycopg.rows.dict_row)
     return conn
 
 def init_db():
     conn = get_db()
-    conn.execute("""
+    cur = conn.cursor()
+    cur.execute("""
         CREATE TABLE IF NOT EXISTS tasks (
-            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            id         SERIAL PRIMARY KEY,
             title      TEXT NOT NULL,
             done       INTEGER DEFAULT 0,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-            updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-    count = conn.execute("SELECT COUNT(*) FROM tasks").fetchone()[0]
+    cur.execute("SELECT COUNT(*) FROM tasks")
+    count = cur.fetchone()["count"]
     if count == 0:
-        conn.executemany("INSERT INTO tasks (title, done) VALUES (?, ?)", [
+        cur.executemany("INSERT INTO tasks (title, done) VALUES (%s, %s)", [
             ("Buy groceries", 0),
             ("Read a book",   0),
             ("Go for a walk", 1),
         ])
     conn.commit()
+    cur.close()
     conn.close()
