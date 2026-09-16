@@ -1,5 +1,5 @@
-fastapi
-uvicorn
-psycopg[binary]
-python-dotenv
-pydantic
+fastapi 
+uvicorn 
+python-dotenv 
+pydantic 
+supabase 
