@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, Response
+from fastapi import FastAPI, HTTPException, Response, Depends
 from pydantic import BaseModel, field_validator
 from database import get_db, init_db
 from routers import auth
+from auth_dependency import get_current_user
 # --- Models ---
 class TaskInput(BaseModel):
     title: str
@@ -119,3 +120,14 @@ def remove(task_id: int):
     if row is None:
         raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
     return Response(status_code=204)
+@app.get("/public/info")
+def public_info():
+    return {"message": "Welcome stranger! This info is public."}
+
+
+@app.get("/protected/dashboard")
+def protected_dashboard(current_user=Depends(get_current_user)):
+    return {
+        "message": "Welcome to the protected dashboard!",
+        "user": current_user
+    }
