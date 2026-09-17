@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Response
 from pydantic import BaseModel, field_validator
 from database import get_db, init_db
-
+from routers import auth
 # --- Models ---
 class TaskInput(BaseModel):
     title: str
@@ -24,7 +24,7 @@ app = FastAPI(
 )
 
 init_db()
-
+app.include_router(auth.router)
 # --- Root endpoints ---
 @app.get("/", summary="API info")
 def root():
