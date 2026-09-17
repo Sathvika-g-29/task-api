@@ -1,62 +1,112 @@
-# Task API — A3: Containerized Postgres Stack
+# Task API — FastAPI + PostgreSQL + Supabase Authentication
 
-A FastAPI task CRUD API backed by PostgreSQL running in Docker.
-This is the third storage swap in the same repo: memory (A1) → SQLite (A2) → Postgres in Docker (A3).
-Routes and service are unchanged — only `database.py` was swapped.
+A containerized FastAPI Task API with PostgreSQL storage and Supabase Authentication.
 
-## How to run (one command)
+The project provides:
+
+* Task CRUD operations
+* User signup and login
+* JWT-based authentication
+* Protected API endpoints
+* Public API endpoint
+* Protected logout
+* Swagger UI with Bearer token authentication
+
+## Tech Stack
+
+* **FastAPI** — REST API framework
+* **PostgreSQL** — Database
+* **Docker / Docker Compose** — Containerization
+* **Supabase Auth** — User authentication and JWT management
+* **Pydantic** — Request validation
+* **HTTPBearer** — Bearer token authentication in FastAPI
+
+## How to Run
+
+### 1. Clone the repository
 
 ```bash
-cp .env.example .env
+git clone https://github.com/Sathvika-g-29/task-api.git
+cd task-api
+```
+
+### 2. Create the environment file
+
+Copy `.env.example` to `.env` and add your local configuration:
+
+```env
+DATABASE_URL=postgresql://postgres:dev@localhost:5432/tasks
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+```
+
+**Never commit `.env` or expose Supabase credentials.**
+
+### 3. Start the application
+
+```bash
 docker compose up --build
 ```
 
-API is available at http://localhost:8000
+The API will be available at:
 
-## Environment variables
-
-Copy `.env.example` to `.env` and fill in your values:
-
-| Variable | Example | Description |
-|---|---|---|
-| DATABASE_URL | postgresql://postgres:dev@db:5432/tasks | Postgres connection string |
-
-## Endpoints
-
-| Method | Path | Status | Description |
-|---|---|---|---|
-| GET | /tasks | 200 | Get all tasks |
-| GET | /tasks/{id} | 200 / 404 | Get one task |
-| POST | /tasks | 201 / 400 | Create a task |
-| PUT | /tasks/{id} | 200 / 404 | Update a task |
-| DELETE | /tasks/{id} | 204 / 404 | Delete a task |
-
-## Example request
-
-```bash
-curl -i -X POST http://localhost:8000/tasks \
-  -H "Content-Type: application/json" \
-  -d '{"title": "My first task"}'
+```text
+http://localhost:8000
 ```
 
-## Persistence proof
+Swagger documentation:
 
-1. Started stack with `docker compose up`
-2. Created tasks via POST /tasks
-3. Ran `docker compose down` — stopped all containers
-4. Ran `docker compose up` again
-5. GET /tasks returned all rows including ones created before restart
-Data survives because Postgres writes to a named Docker volume (`taskdata`),
-not inside the container. `docker compose down` stops containers but keeps volumes.
+```text
+http://localhost:8000/docs
+```
 
-## Architecture
+## Authentication Flow
 
-- `main.py` — FastAPI routes (unchanged from A1/A2)
-- `database.py` — Postgres repository (only file that changed from A2)
-- `docker-compose.yml` — defines `api` and `db` services
-- `Dockerfile` — builds the FastAPI app image
-- `.env` — gitignored secrets
-- `.env.example` — committed placeholder for collaborators
-## Database screenshot
+The application uses Supabase as the identity provider.
 
-![Database rows](Screenshot.png)
+```text
+User
+  ↓
+FastAPI /auth/signup
+  ↓
+Supabase Auth
+  ↓
+User account created
+
+User
+  ↓
+FastAPI /auth/login
+  ↓
+Supabase Auth
+  ↓
+Access Token + Refresh Token
+  ↓
+Protected FastAPI endpoints
+  ↓
+Supabase verifies the access token
+```
+
+The backend uses a reusable authentication dependency to protect routes that require a valid Bearer token.
+
+## API Endpoints
+
+### Authentication
+
+| Method | Path           | Status | Authentication | Description                             |
+| ------ | -------------- | -----: | -------------- | --------------------------------------- |
+| POST   | `/auth/signup` |    201 | Public         | Create a new user                       |
+| POST   | `/auth/login`  |    200 | Public         | Login and receive access/refresh tokens |
+| POST   | `/auth/logout` |    204 | Required       | Logout the authenticated user           |
+
+### Public
+
+| Method | Path           | Status | Authentication | Description                |
+| ------ | -------------- | -----: | -------------- | -------------------------- |
+| GET    | `/public/info` |    200 | Public         | Returns public information |
+
+### Protected
+
+| Method | Path                 |    Status | Authentication | Description                            |
+| ------ | -------------------- | --------: | -------------- | -------------------------------------- |
+| GET    | `/protected/profile` | 200 / 401 | Required       | Returns authenticated user information |
+| GET    | `/protected/dashb    |           |                |                                        |
