@@ -1,4 +1,4 @@
-.env 
-__pycache__/ 
-*.pyc 
-tasks.db 
+bin/
+dotenv/
+python_dotenv-1.2.3.dist-info/
+__pycache__/
