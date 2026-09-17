@@ -131,3 +131,10 @@ def protected_dashboard(current_user=Depends(get_current_user)):
         "message": "Welcome to the protected dashboard!",
         "user": current_user
     }
+@app.get("/protected/profile")
+def protected_profile(current_user=Depends(get_current_user)):
+    return {
+        "id": current_user.id,
+        "email": current_user.email,
+        "created_at": current_user.created_at
+    }
