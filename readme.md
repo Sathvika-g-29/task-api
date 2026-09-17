@@ -106,7 +106,94 @@ The backend uses a reusable authentication dependency to protect routes that req
 
 ### Protected
 
-| Method | Path                 |    Status | Authentication | Description                            |
-| ------ | -------------------- | --------: | -------------- | -------------------------------------- |
-| GET    | `/protected/profile` | 200 / 401 | Required       | Returns authenticated user information |
-| GET    | `/protected/dashb    |           |                |                                        |
+| Method | Path                   |    Status | Authentication | Description                            |
+| ------ | ---------------------- | --------: | -------------- | -------------------------------------- |
+| GET    | `/protected/profile`   | 200 / 401 | Required       | Returns authenticated user information |
+| GET    | `/protected/dashboard` | 200 / 401 | Required       | Example protected dashboard            |
+
+### Tasks
+
+| Method | Path          |    Status | Description   |
+| ------ | ------------- | --------: | ------------- |
+| GET    | `/tasks`      |       200 | Get all tasks |
+| GET    | `/tasks/{id}` | 200 / 404 | Get one task  |
+| POST   | `/tasks`      | 201 / 400 | Create a task |
+| PUT    | `/tasks/{id}` | 200 / 404 | Update a task |
+| DELETE | `/tasks/{id}` | 204 / 404 | Delete a task |
+
+## Using Protected Endpoints
+
+1. Create an account using `/auth/signup`.
+2. Login using `/auth/login`.
+3. Copy the returned `access_token`.
+4. Open `/docs`.
+5. Click **Authorize**.
+6. Enter the access token in the HTTPBearer field.
+7. Execute a protected endpoint such as `/protected/profile`.
+
+Protected endpoints reject requests when the access token is missing, malformed, invalid, or expired.
+
+## Example Login Response
+
+```json
+{
+  "access_token": "your-access-token",
+  "refresh_token": "your-refresh-token"
+}
+```
+
+Do not publish real tokens.
+
+## Project Structure
+
+```text
+task-api/
+├── main.py
+├── database.py
+├── supabase_client.py
+├── auth_dependency.py
+├── routers/
+│   ├── __init__.py
+│   └── auth.py
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── .env.example
+├── .gitignore
+└── README.md
+```
+
+### Important Files
+
+* `main.py` — FastAPI application, task routes, public and protected routes
+* `database.py` — PostgreSQL connection and task table initialization
+* `supabase_client.py` — Supabase client configuration
+* `auth_dependency.py` — Reusable Bearer token verification dependency
+* `routers/auth.py` — Signup, login, and logout endpoints
+* `docker-compose.yml` — API and PostgreSQL services
+* `.env.example` — Environment variable template
+* `.env` — Local secrets; ignored by Git
+
+## PostgreSQL Persistence
+
+PostgreSQL runs as a Docker service and uses a named volume for persistent data.
+
+This means task data remains available after stopping and restarting the containers.
+
+## Swagger
+
+FastAPI's Swagger UI is available at:
+
+```text
+http://localhost:8000/docs
+```
+
+The protected endpoints use HTTP Bearer authentication, allowing the access token to be supplied through Swagger's **Authorize** button.
+
+## Security Notes
+
+* Supabase credentials are stored in environment variables.
+* `.env` is excluded from Git.
+* Access tokens should never be committed to the repository.
+* Protected routes use a reusable authentication dependency.
+* The backend verifies authentication through Supabase rather than hardcoding users or tokens.
